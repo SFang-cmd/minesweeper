@@ -38,11 +38,11 @@ public class GameBoard extends JPanel {
     public static final int BOARD_HEIGHT = 800;
 
     //Size of the map (can be changed later)
-    int width = 10;
-    int height = 10;
+    int width = 24;
+    int height = 20;
 
     //Number of bombs to be generated
-    int numBombs = 10;
+    int numBombs = 99;
 
     int boxWidth;
     int boxHeight;
@@ -53,6 +53,8 @@ public class GameBoard extends JPanel {
     public GameBoard(JLabel statusInit) {
         // first location for the bomb to be placed in the grid
 
+        boxWidth = BOARD_WIDTH/width;
+        boxHeight = BOARD_HEIGHT/height;
 
         // creates border around the court area, JComponent method
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -74,7 +76,11 @@ public class GameBoard extends JPanel {
                 Point p = e.getPoint();
 
                 // updates the model given the coordinates of the mouseclick
-                mnswp.playTurn(p.x / 100, p.y / 100);
+                mnswp.playTurn((width * p.x) / BOARD_WIDTH, (height * p.y) / BOARD_HEIGHT);
+                System.out.println((width * p.x) / BOARD_WIDTH);
+                System.out.println((height * p.y) / BOARD_HEIGHT);
+                System.out.println(p.x);
+                System.out.println(p.y);
 
                 updateStatus(); // updates the status JLabel
                 repaint(); // repaints the game board
@@ -118,9 +124,6 @@ public class GameBoard extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        boxWidth = BOARD_WIDTH/width;
-        boxHeight = BOARD_HEIGHT/height;
 
         // Draws board grid
         for (int j = 1; j <= height; j++) {

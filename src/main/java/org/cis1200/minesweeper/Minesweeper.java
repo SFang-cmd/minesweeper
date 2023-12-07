@@ -81,13 +81,13 @@ public class Minesweeper {
                 for (int j = 0; j < 3; j++) {
                     try{
                         map[r + j - 1][c + i - 1] = new NumberBox(c + i - 1, r + j - 1, 0);
-                        map[r + j - 1][c + i - 1].reveal();
                     } catch (RuntimeException e) {
                         System.out.println("Out of bounds");
                     }
                 }
             }
             generateGame(height,width,numBombs);
+            reveal(r,c);
             newGame = false;
             System.out.println("Game Generated");
         } else {
@@ -133,11 +133,12 @@ public class Minesweeper {
                 }
                 for (int i = startX; i < endX; i++) {
                     for (int j = startY; j < endY; j++) {
-                        if (!map[c + i - 1][r + j - 1].isRevealed()) {
+                        if (!map[r + j - 1][c + i - 1].isRevealed()) {
                             reveal(c + i - 1, r + j - 1);
                         }
                     }
                 }
+
             }
         }
     }
