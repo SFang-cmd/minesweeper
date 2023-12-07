@@ -98,19 +98,10 @@ public class GameBoard extends JPanel {
      * Updates the JLabel to reflect the current state of the game.
      */
     private void updateStatus() {
-        if (mnswp.getCurrentPlayer()) {
-            status.setText("Player 1's Turn");
+        if (mnswp.gameOver()) {
+            status.setText("You lose!");
         } else {
-            status.setText("Player 2's Turn");
-        }
-
-        int winner = mnswp.checkWinner();
-        if (winner == 1) {
-            status.setText("Player 1 wins!!!");
-        } else if (winner == 2) {
-            status.setText("Player 2 wins!!!");
-        } else if (winner == 3) {
-            status.setText("It's a tie.");
+            status.setText("Game start");
         }
     }
 

@@ -6,7 +6,6 @@ package org.cis1200.minesweeper;
  * Created by Bayley Tuch, Sabrina Green, and Nicolas Corona in Fall 2020.
  */
 
-import java.sql.SQLOutput;
 import java.util.Random;
 
 /**
@@ -44,11 +43,17 @@ public class Minesweeper {
     int bGenY;
     Box[][] map;
 
+    int height;
+    int width;
+    private final int numBombs;
+
     /**
      * Constructor sets up game state.
      */
     public Minesweeper(int height, int width, int numBombs) {
-//        System.out.println("woah");
+        this.height = height;
+        this.width = width;
+        this.numBombs = numBombs;
         bGenX = rand.nextInt(width);
         bGenY = rand.nextInt(height);
         map = new Box[height][width];
@@ -67,53 +72,155 @@ public class Minesweeper {
      * @return whether the turn was successful
      */
     public boolean playTurn(int c, int r) {
-        if (board[r][c] != 0 || gameOver) {
-            return false;
-        }
+//        if (map[r][c] == null || gameOver) {
+//            return false;
+//        }
 
         if (newGame) {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     try{
-                        map[r + j - 1][c + i - 1] = new NumberBox(map, c + i - 1, r + j - 1, 0);
+                        map[r + j - 1][c + i - 1] = new NumberBox(c + i - 1, r + j - 1, 0);
+                        map[r + j - 1][c + i - 1].reveal();
                     } catch (RuntimeException e) {
                         System.out.println("Out of bounds");
                     }
-
                 }
             }
-
-
-        }
-
-        if (player1) {
-            board[r][c] = 1;
+            generateGame(height,width,numBombs);
+            newGame = false;
+            System.out.println("Game Generated");
         } else {
-            board[r][c] = 2;
+            reveal(r,c);
+            System.out.println("Game Square revealed");
         }
 
-        numTurns++;
-        if (checkWinner() == 0) {
-            player1 = !player1;
+        if(map[r][c].getVal() == 9) {
+            System.out.println("Bomb hit");
+            gameOver = true;
         }
+        System.out.println("Turn finished");
         return true;
+    }
+
+    public void reveal(int c, int r) {
+        if (!map[r][c].isRevealed()) {
+            map[r][c].reveal();
+            int startX;
+            int endX;
+            int startY;
+            int endY;
+            if (map[r][c].getVal() == 0) {
+                if (c == 0) {
+                    startX = 1;
+                    endX = 3;
+                } else if (c == map[0].length - 1) {
+                    startX = 0;
+                    endX = 2;
+                } else {
+                    startX = 0;
+                    endX = 3;
+                }
+                if (r == 0) {
+                    startY = 1;
+                    endY = 3;
+                } else if (r == map.length - 1) {
+                    startY = 0;
+                    endY = 2;
+                } else {
+                    startY = 0;
+                    endY = 3;
+                }
+                for (int i = startX; i < endX; i++) {
+                    for (int j = startY; j < endY; j++) {
+                        if (!map[c + i - 1][r + j - 1].isRevealed()) {
+                            reveal(c + i - 1, r + j - 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public Box[][] getAroundValues(int c, int r) {
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+
+        Box[][] grid = new Box[3][3];
+
+        if (c <= 0) {
+            startX = 1;
+            endX = 3;
+        } else if (c >= map[0].length - 1) {
+            startX = 0;
+            endX = 2;
+        } else {
+            startX = 0;
+            endX = 3;
+        }
+        if (r <= 0) {
+            startY = 1;
+            endY = 3;
+        } else if (r >= map.length - 1) {
+            startY = 0;
+            endY = 2;
+        } else {
+            startY = 0;
+            endY = 3;
+        }
+
+        for(int i = startX; i < endX; i++){
+            for (int j = startY; j < endY; j++) {
+                grid[i][j] = map[r + j - 1][c + i - 1];
+            }
+        }
+        return grid;
+    }
+
+    public int getNumBombs(int c, int r) {
+        int totalBombs = 0;
+        for(Box[] row : getAroundValues(c,r)) {
+            for(Box elem : row) {
+                if (elem != null)
+                    totalBombs += elem.getVal() == 9 ? 1 : 0;
+            }
+        }
+        return totalBombs;
+    }
+
+    public boolean touchesOpen(Box[][] b) {
+        for (int i = 0; i < 3; i++){
+            for (int j = 0; j < 3; j++) {
+                try {
+                    if (b[j][i].getVal() == 0) {
+                        return true;
+                    }
+                } catch (RuntimeException e) {
+                    System.out.println("None");
+                }
+            }
+        }
+        return false;
     }
 
     public void generateGame(int height, int width, int numBombs) {
         for (int r = 0; r < numBombs; r++) {
-            while (map[bGenY][bGenX] != null) {
+            while ((map[bGenY][bGenX] != null) ||
+                    (touchesOpen(getAroundValues(bGenX, bGenY)))) {
                 bGenX = rand.nextInt(width);
                 bGenY = rand.nextInt(height);
             }
             map[bGenY][bGenX] = new BombBox(bGenX, bGenY);
             System.out.println(map[bGenY][bGenX].getVal());
-
         }
         // System.out.println(map[0][0]);
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (map[j][i] == null){
-                    map[j][i] = new NumberBox(map, i, j);
+                    map[j][i] = new NumberBox(i, j);
+                    map[j][i].setVal(getNumBombs(i,j));
                 }
             }
         }
@@ -126,27 +233,9 @@ public class Minesweeper {
      * @return 0 if nobody has won yet, 1 if player 1 has won, and 2 if player 2
      *         has won, 3 if the game hits stalemate
      */
-    public int checkWinner() {
+    public boolean gameOver() {
         // Check horizontal win
-        for (int i = 0; i < board.length; i++) {
-            if (board[i][0] == board[i][1] &&
-                    board[i][1] == board[i][2] &&
-                    board[i][1] != 0) {
-                gameOver = true;
-                if (player1) {
-                    return 1;
-                } else {
-                    return 2;
-                }
-            }
-        }
-
-        if (numTurns >= 9) {
-            gameOver = true;
-            return 3;
-        } else {
-            return 0;
-        }
+        return gameOver;
     }
 
     /**
@@ -155,16 +244,14 @@ public class Minesweeper {
      */
     public void printGameState() {
         System.out.println("\n\nTurn " + numTurns + ":\n");
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                System.out.print(board[i][j]);
-                if (j < 2) {
-                    System.out.print(" | ");
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                if (map[i][j] != null){
+                    System.out.print(map[i][j].getVal());
                 }
+                System.out.print(", ");
             }
-            if (i < 2) {
-                System.out.println("\n---------");
-            }
+            System.out.println();
         }
     }
 
@@ -172,7 +259,7 @@ public class Minesweeper {
      * reset (re-)sets the game state to start a new game.
      */
     public void reset() {
-        board = new int[GameBoard.BOARD_HEIGHT][GameBoard.BOARD_WIDTH];
+        map = new Box[height][width];
         numTurns = 0;
         player1 = true;
         gameOver = false;
@@ -223,7 +310,7 @@ public class Minesweeper {
      * Run this file to see the output of this method in your console.
      */
     public static void main(String[] args) {
-        Minesweeper t = new Minesweeper(1,1,1);
+        Minesweeper t = new Minesweeper(10,10,20);
 
         t.playTurn(1, 1);
         t.printGameState();
@@ -237,22 +324,22 @@ public class Minesweeper {
         t.playTurn(2, 0);
         t.printGameState();
 
-        t.playTurn(1, 0);
+        t.playTurn(3, 9);
         t.printGameState();
 
-        t.playTurn(1, 2);
+        t.playTurn(4, 4);
         t.printGameState();
 
-        t.playTurn(0, 1);
+        t.playTurn(8, 2);
         t.printGameState();
 
-        t.playTurn(2, 2);
+        t.playTurn(6, 4);
         t.printGameState();
 
-        t.playTurn(2, 1);
+        t.playTurn(6, 9);
         t.printGameState();
         System.out.println();
         System.out.println();
-        System.out.println("Winner is: " + t.checkWinner());
+        System.out.println("Bomb hit? " + t.gameOver());
     }
 }
