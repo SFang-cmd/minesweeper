@@ -7,12 +7,14 @@ public abstract class Box {
     public int val;
     public boolean shown;
     public int[][] map;
+    public boolean flagged;
     
     public Box(int x, int y) {
         this.map = map;
         this.x = x;
         this.y = y;
         this.shown = false;
+        this.flagged = false;
     }
 
     public int getVal() {
@@ -24,6 +26,8 @@ public abstract class Box {
         try {
             if (shown) {
                 return val;
+            } else if (flagged) {
+                return -2;
             } else {
                 return -1;
             }
@@ -38,6 +42,16 @@ public abstract class Box {
     
     public boolean isRevealed() {
         return shown;
+    }
+
+    public void flag() {
+        if (!shown) {
+            flagged = flagged ? false : true;
+        }
+    }
+
+    public boolean isFlagged() {
+        return flagged;
     }
 
     public void setVal(int val) {

@@ -87,11 +87,11 @@ public class Minesweeper {
                 }
             }
             generateGame(height,width,numBombs);
-            reveal(r,c);
+            reveal(c,r);
             newGame = false;
             System.out.println("Game Generated");
         } else {
-            reveal(r,c);
+            reveal(c,r);
             System.out.println("Game Square revealed");
         }
 
@@ -104,7 +104,7 @@ public class Minesweeper {
     }
 
     public void reveal(int c, int r) {
-        if (!map[r][c].isRevealed()) {
+        if (!map[r][c].isRevealed() && !map[r][c].isFlagged()) {
             map[r][c].reveal();
             int startX;
             int endX;
@@ -139,6 +139,39 @@ public class Minesweeper {
                     }
                 }
 
+            }
+        }
+    }
+
+    public void revealSurroundings(int c, int r) {
+        map[r][c].reveal();
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+        if (c == 0) {
+            startX = 1;
+            endX = 3;
+        } else if (c == map[0].length - 1) {
+            startX = 0;
+            endX = 2;
+        } else {
+            startX = 0;
+            endX = 3;
+        }
+        if (r == 0) {
+            startY = 1;
+            endY = 3;
+        } else if (r == map.length - 1) {
+            startY = 0;
+            endY = 2;
+        } else {
+            startY = 0;
+            endY = 3;
+        }
+        for (int i = startX; i < endX; i++) {
+            for (int j = startY; j < endY; j++) {
+                reveal(c + i - 1, r + j - 1);
             }
         }
     }
@@ -199,7 +232,7 @@ public class Minesweeper {
                         return true;
                     }
                 } catch (RuntimeException e) {
-                    System.out.println("None");
+//                    System.out.println("None");
                 }
             }
         }
@@ -214,7 +247,7 @@ public class Minesweeper {
                 bGenY = rand.nextInt(height);
             }
             map[bGenY][bGenX] = new BombBox(bGenX, bGenY);
-            System.out.println(map[bGenY][bGenX].getVal());
+//            System.out.println(map[bGenY][bGenX].getVal());
         }
         // System.out.println(map[0][0]);
         for (int i = 0; i < width; i++) {
@@ -227,6 +260,10 @@ public class Minesweeper {
         }
     }
 
+    public void flagTile(int c, int r) {
+        map[r][c].flag();
+    }
+
     /**
      * checkWinner checks whether the game has reached a win condition.
      * checkWinner only looks for horizontal wins.
@@ -235,7 +272,6 @@ public class Minesweeper {
      *         has won, 3 if the game hits stalemate
      */
     public boolean gameOver() {
-        // Check horizontal win
         return gameOver;
     }
 
