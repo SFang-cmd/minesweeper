@@ -8,6 +8,7 @@ public abstract class Box {
     public boolean shown;
     public int[][] map;
     public boolean flagged;
+    public boolean previewed;
     
     public Box(int x, int y) {
         this.map = map;
@@ -15,6 +16,7 @@ public abstract class Box {
         this.y = y;
         this.shown = false;
         this.flagged = false;
+        this.previewed = false;
     }
 
     public int getVal() {
@@ -52,6 +54,10 @@ public abstract class Box {
 
     public boolean isFlagged() {
         return flagged;
+    }
+
+    public boolean isHidden() {
+        return shown;
     }
 
     public void setVal(int val) {

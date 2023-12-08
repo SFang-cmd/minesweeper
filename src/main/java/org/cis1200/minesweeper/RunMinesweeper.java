@@ -50,7 +50,7 @@ public class RunMinesweeper implements Runnable {
         // define it as an anonymous inner class that is an instance of
         // ActionListener with its actionPerformed() method overridden. When the
         // button is pressed, actionPerformed() will be called.
-        final JButton reset = new JButton("Reset");
+        final JButton reset = new JButton("New Game");
         reset.addActionListener(e -> board.reset());
         control_panel.add(reset);
 
