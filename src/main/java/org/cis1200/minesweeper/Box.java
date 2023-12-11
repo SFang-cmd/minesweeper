@@ -29,9 +29,9 @@ public abstract class Box {
             if (shown) {
                 return val;
             } else if (flagged) {
-                return -2;
+                return val + 10;
             } else {
-                return -1;
+                return val - 10;
             }
         } catch (RuntimeException e) {
             return 0;

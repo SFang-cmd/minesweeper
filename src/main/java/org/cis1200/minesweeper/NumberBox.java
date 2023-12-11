@@ -9,7 +9,7 @@ public class NumberBox extends Box {
 
     public NumberBox(int x, int y, int val) {
         super(x, y);
-        this.val = 0;
+        this.val = val;
     }
 
     public void setVal(int val) {

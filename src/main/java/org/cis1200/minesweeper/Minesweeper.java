@@ -6,6 +6,8 @@ package org.cis1200.minesweeper;
  * Created by Bayley Tuch, Sabrina Green, and Nicolas Corona in Fall 2020.
  */
 
+import java.io.*;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
@@ -26,14 +28,12 @@ import java.util.Random;
  * visualized with Strings printed to the console.
  */
 public class Minesweeper {
-
-    private int[][] board;
     private int numTurns;
-    private boolean player1;
     private boolean gameOver;
 
     // Started new game boolean
     private boolean newGame;
+    Box[][] map;
 
     // Random number generator
     Random rand = new Random();
@@ -41,14 +41,13 @@ public class Minesweeper {
     // Bomb generation X and Y
     int bGenX;
     int bGenY;
-    Box[][] map;
 
     int bombX = 0;
     int bombY = 0;
 
     int height;
     int width;
-    private final int numBombs;
+    private int numBombs;
 
     /**
      * Constructor sets up game state.
@@ -81,7 +80,7 @@ public class Minesweeper {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     try{
-                        map[r + j - 1][c + i - 1] = new NumberBox(c + i - 1, r + j - 1, 0);
+                        map[r + j - 1][c + i - 1] = new NumberBox(c + i - 1, r + j - 1);
                     } catch (RuntimeException e) {
                         System.out.println("Out of bounds");
                     }
@@ -92,23 +91,38 @@ public class Minesweeper {
             newGame = false;
             System.out.println("Game Generated");
         } else {
-            reveal(c,r);
+            if (!map[r][c].isFlagged()){
+                System.out.println(map[r][c].isFlagged());
+                reveal(c,r);
+            }
             System.out.println("Game Square revealed");
         }
 
-        if(map[r][c].getVal() == 9) {
+        if(map[r][c].getShownVal() == 9) {
             System.out.println("Bomb hit");
             bombX = c;
             bombY = r;
             gameOver = true;
         }
         System.out.println("Turn finished");
+        numTurns++;
         return true;
     }
 
+    /**
+     * reveal is a recursive method that reveals the current box,
+     * then if the box is an empty one, will reveal the 3-by-3 box
+     * surrounding the box. If the surrounding box is a number,
+     * the reveal recursion will stop (thus being a base case).
+     * @param c column in box map
+     * @param r row in box map
+     */
     public void reveal(int c, int r) {
         if (!map[r][c].isRevealed() && !map[r][c].isFlagged()) {
             map[r][c].reveal();
+//            System.out.println(map[r][c].isFlagged());
+//            System.out.println(r);
+//            System.out.println(c);
             int startX;
             int endX;
             int startY;
@@ -146,13 +160,17 @@ public class Minesweeper {
         }
     }
 
+    /**
+     * revealSurroundings calls reveal on the 3-by-3 (or less if on an edge)
+     * so that the middle mouse-click functionality can work.
+     * @param c
+     * @param r
+     */
     public void revealSurroundings(int c, int r) {
         int startX;
         int endX;
         int startY;
         int endY;
-        System.out.println(getNumFlags(c,r));
-        System.out.println(getNumBombs(c,r));
         if (map[r][c].isRevealed() && getNumFlags(c,r) == getNumBombs(c,r)) {
             if (c == 0) {
                 startX = 1;
@@ -176,9 +194,18 @@ public class Minesweeper {
             }
             for (int i = startX; i < endX; i++) {
                 for (int j = startY; j < endY; j++) {
-                    reveal(c + i - 1, r + j - 1);
+                    if (!map[r + j - 1][c + i - 1].isFlagged()) {
+                        reveal(c + i - 1, r + j - 1);
+                        if(map[r + j - 1][c + i - 1].getVal() == 9) {
+                            System.out.println("Bomb hit");
+                            bombX = c;
+                            bombY = r;
+                            gameOver = true;
+                        }
+                    }
                 }
             }
+
         }
     }
 
@@ -235,7 +262,7 @@ public class Minesweeper {
         for(Box[] row : getAroundValues(c,r)) {
             for(Box elem : row) {
                 if (elem != null)
-                    totalBombs += elem.getShownVal() == -2 ? 1 : 0;
+                    totalBombs += elem.getShownVal() >= 10 ? 1 : 0;
             }
         }
         return totalBombs;
@@ -330,21 +357,9 @@ public class Minesweeper {
 
         map = new Box[height][width];
         numTurns = 0;
-        player1 = true;
         gameOver = false;
 
         newGame = true;
-    }
-
-    /**
-     * getCurrentPlayer is a getter for the player
-     * whose turn it is in the game.
-     * 
-     * @return true if it's Player 1's turn,
-     *         false if it's Player 2's turn.
-     */
-    public boolean getCurrentPlayer() {
-        return player1;
     }
 
     /**
@@ -378,6 +393,99 @@ public class Minesweeper {
      *
      * Run this file to see the output of this method in your console.
      */
+
+    /**
+     * Saves the current game state in a file. Format is:
+     * Line 1: height, width, numBombs, numTurns, gameOver, newGame, bombX, bombY
+     * Line 2-max height is the rest of the game board's states, with
+     * @param fileName name of saved game
+     */
+    public void saveGameState(String fileName) {
+        if (fileName == null) {
+            throw new IllegalArgumentException();
+        }
+        File file;
+        String filePath = "saves/" + fileName + ".csv";
+        try {
+            file = new File(filePath);
+            if(file.createNewFile()){
+                System.out.println(filePath + " File Created");
+            } else {
+                System.out.println("File " + filePath + " already exists");
+            }
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+            writer.write(height + "," + width + "," + numBombs + "," + numTurns + "," +
+                    gameOver + "," + newGame + "," + bombX + "," + bombY);
+            writer.newLine();
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+                    writer.write(Integer.toString(map[j][i].getShownVal()));
+                    if (i != width - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.newLine();
+            }
+            writer.flush();
+            writer.close();
+
+        } catch (RuntimeException | IOException e) {
+            System.out.println("Make file error encountered: " + e.getMessage());
+        }
+    }
+
+    public void loadGame(String fileName) {
+        if (fileName == null) {
+            throw new IllegalArgumentException();
+        }
+        File file;
+        String filePath = "saves/" + fileName + ".csv";
+        String gameConfig;
+        String[] gameSets;
+        String readRow;
+        String[] rowList;
+        int boxValue;
+        try {
+            file = new File(filePath);
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            if (reader.ready()) {
+                gameConfig = reader.readLine();
+                gameSets = gameConfig.split(",");
+                height = Integer.parseInt(gameSets[0]);
+                width = Integer.parseInt(gameSets[1]);
+                numBombs = Integer.parseInt(gameSets[2]);
+                numTurns = Integer.parseInt(gameSets[3]);
+                gameOver = Boolean.parseBoolean(gameSets[4]);
+                newGame = Boolean.parseBoolean(gameSets[5]);
+                bombX = Integer.parseInt(gameSets[6]);
+                bombY = Integer.parseInt(gameSets[7]);
+            }
+            map = new Box[height][width];
+            for (int j = 0; j < height; j++) {
+                if (!reader.ready()) {
+                    throw new NoSuchElementException();
+                }
+                readRow = reader.readLine();
+                rowList = readRow.split(",");
+                for (int i = 0; i < width; i++) {
+                    boxValue = Integer.parseInt(rowList[i]);
+                    if ((boxValue + 10) % 10 == 9) {
+                        map[j][i] = new BombBox(i,j);
+                    } else {
+                        map[j][i] = new NumberBox(i,j,(boxValue + 10) % 10);
+                    }
+                    if (boxValue >= 10) {
+                        map[j][i].flag();
+                    } else if (boxValue >= 0) {
+                        map[j][i].reveal();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Invalid File");
+        }
+    }
+
     public static void main(String[] args) {
         Minesweeper t = new Minesweeper(10,10,20);
 

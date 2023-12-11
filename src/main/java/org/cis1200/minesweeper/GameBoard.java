@@ -84,6 +84,12 @@ public class GameBoard extends JPanel {
     private static BufferedImage box7;
     private static BufferedImage box8;
 
+    // Timer Stuff
+    private Timer mGameTimer;
+    private int mTimeLeft = 20;
+    private final int mDelay = 1000; // Start after 1 second
+    private final int mPeriod = 1000; // Ticks every 1 second
+
     /**
      * Initializes the game board.
      */
@@ -211,6 +217,27 @@ public class GameBoard extends JPanel {
         }
     }
 
+    public void saveGame(String fileName) {
+        mnswp.saveGameState(fileName);
+    }
+
+    public void loadGame(String fileName) {
+        mnswp.loadGame(fileName);
+    }
+
+    public String[] getLoads() {
+        File folder = new File("saves");
+        File[] folderContents = folder.listFiles();
+        String[] fileNames = new String[folderContents.length];
+        if (folderContents == null) {
+            return fileNames;
+        }
+        for (int i = 0; i < folderContents.length; i++) {
+            fileNames[i] = folderContents[i].getName();
+        }
+        return fileNames;
+    }
+
     /**
      * Draws the game board.
      * 
@@ -238,9 +265,9 @@ public class GameBoard extends JPanel {
             for (int j = 0; j <= height - 1; j++) {
                 int state = mnswp.getCellShown(i, j);
                 if (!mnswp.gameOver()) {
-                    if (state == -2) {
+                    if (state >= 10) {
                         g.drawImage(flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
-                    } else if (state == -1) {
+                    } else if (state <= -1) {
                         g.drawImage(hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
                     } else if (state == 0) {
                         g.drawImage(empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
@@ -266,17 +293,16 @@ public class GameBoard extends JPanel {
 
                 } else {
                     try {
-                        if(state == -1) {
+                        if(state <= -1) {
                             g.drawImage(hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
                             if (mnswp.getCell(i, j) == 9) {
-                                System.out.println("Game over");
                                 g.drawImage(bomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                             }
                         } else if (state == 9) {
                             g.drawImage(redBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
-                        } else if (mnswp.getCell(i, j) != 9 && state == -2) {
+                        } else if (mnswp.getCell(i, j) != 9 && state >= 10) {
                             g.drawImage(noBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
-                        } else if (state == -2) {
+                        } else if (state >= 10) {
                             g.drawImage(flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
                         } else if (state == 0) {
                             g.drawImage(empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);

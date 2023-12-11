@@ -8,6 +8,7 @@ package org.cis1200.minesweeper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
@@ -26,10 +27,12 @@ import java.awt.*;
  */
 public class RunMinesweeper implements Runnable {
     public void run() {
+
+        final JList loadInput = new JList();
         // NOTE: the 'final' keyword denotes immutability even for local variables.
 
         // Top-level frame in which game components live
-        final JFrame frame = new JFrame("TicTacToe");
+        final JFrame frame = new JFrame("Play");
         frame.setLocation(300, 300);
 
         // Status panel
@@ -46,20 +49,125 @@ public class RunMinesweeper implements Runnable {
         final JPanel control_panel = new JPanel();
         frame.add(control_panel, BorderLayout.NORTH);
 
+        // Title Screen and settings page
+        final JFrame homeScreen = new JFrame("Minesweeper");
+        homeScreen.setLocation(410, 300);
+
+        final JPanel title = new JPanel();
+        title.setLayout(new BoxLayout(title, BoxLayout.PAGE_AXIS));
+        homeScreen.add(title);
+        final JLabel gameLogo = new JLabel(new ImageIcon("files/MinesweeperTitle.png"));
+        gameLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(gameLogo);
+
+        // Save Game Input Frame
+        final JFrame saveFrame = new JFrame("Save Game");
+        saveFrame.setLocation(410, 300);
+
+        final JPanel save = new JPanel();
+        save.setLayout(new FlowLayout());
+        saveFrame.add(save);
+
+        // Load Game Input Frame
+        final JFrame loadFrame = new JFrame("Load Game");
+        loadFrame.setLocation(410, 300);
+
+        final JPanel load = new JPanel();
+        load.setLayout(new FlowLayout());
+        loadFrame.add(load);
+
         // Note here that when we add an action listener to the reset button, we
         // define it as an anonymous inner class that is an instance of
         // ActionListener with its actionPerformed() method overridden. When the
         // button is pressed, actionPerformed() will be called.
-        final JButton reset = new JButton("New Game");
-        reset.addActionListener(e -> board.reset());
-        control_panel.add(reset);
+        final JButton pause = new JButton("Pause");
+        pause.addActionListener(e -> homeScreen.setVisible(true));
+        pause.setAlignmentX(Component.CENTER_ALIGNMENT);
+        control_panel.add(pause);
+
+        final JButton resumeGame = new JButton("Resume");
+        resumeGame.addActionListener(e -> homeScreen.setVisible(false));
+        resumeGame.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(resumeGame);
+
+        final JButton newGame = new JButton("New Game");
+        newGame.addActionListener(e -> {
+            board.reset();
+            homeScreen.setVisible(false);
+        });
+        newGame.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(newGame);
+
+        final JButton saveGame = new JButton("Save Game");
+        saveGame.addActionListener(e -> saveFrame.setVisible(true));
+        saveGame.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(saveGame);
+
+        final JButton loadGame = new JButton("Load Game");
+        loadGame.addActionListener(e -> {
+            setLoad(loadInput, board.getLoads());
+            loadFrame.setVisible(true);
+        });
+        loadGame.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(loadGame);
+
+        ///////////
+        final JLabel saveLabel = new JLabel("Name your save: ");
+        save.add(saveLabel);
+        final JTextField saveInput = new JTextField("File Name");
+        save.add(saveInput);
+        final JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(e -> {
+            try {
+                board.saveGame(saveInput.getText());
+            } catch (RuntimeException f) {
+                System.out.println("Error saving, name not valid");
+            }
+            saveFrame.setVisible(false);
+        });
+        save.add(saveButton);
+
+        ///////////
+
+        final JLabel loadLabel = new JLabel("Select a file to load: ");
+        load.add(loadLabel);
+        loadInput.setListData(board.getLoads());
+        load.add(loadInput);
+        final JButton loadButton = new JButton("Load");
+        loadButton.addActionListener(e -> {
+            try {
+                board.loadGame(((String) loadInput.getSelectedValue()).split("\\.")[0]);
+                board.repaint();
+            } catch (RuntimeException f) {
+                System.out.println("Error loading game");
+            }
+            loadFrame.setVisible(false);
+            homeScreen.dispose();
+        });
+        load.add(loadButton);
 
         // Put the frame on the screen
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
+        homeScreen.pack();
+        homeScreen.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        homeScreen.setVisible(false);
+
+        saveFrame.pack();
+        saveFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        saveFrame.setVisible(false);
+
+        loadFrame.pack();
+        loadFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        loadFrame.setVisible(false);
+
         // Start the game
         board.reset();
+    }
+
+    private void setLoad(JList list, String[] fileList) {
+        list.setListData(fileList);
     }
 }
