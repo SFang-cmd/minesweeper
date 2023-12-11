@@ -85,7 +85,7 @@ public class GameBoard extends JPanel {
     private static BufferedImage box8;
 
     // Timer Stuff
-    private Timer mGameTimer;
+    private TimeClock mGameTimer;
     private int mTimeLeft = 20;
     private final int mDelay = 1000; // Start after 1 second
     private final int mPeriod = 1000; // Ticks every 1 second
@@ -197,9 +197,16 @@ public class GameBoard extends JPanel {
     /**
      * (Re-)sets the game to its initial state.
      */
-    public void reset() {
-        mnswp.reset();
-        status.setText("Player 1's Turn");
+    public void reset(int height, int width, int numBombs) {
+        this.height = height;
+        this.width = width;
+        this.numBombs = numBombs;
+
+        boxWidth = BOARD_WIDTH/this.width;
+        boxHeight = BOARD_HEIGHT/this.height;
+
+        mnswp.reset(this.height, this.width, this.numBombs);
+        status.setText("~~<PLAY MINESWEEPER>~~");
         repaint();
 
         // Makes sure this component has keyboard/mouse focus
@@ -233,7 +240,7 @@ public class GameBoard extends JPanel {
             return fileNames;
         }
         for (int i = 0; i < folderContents.length; i++) {
-            fileNames[i] = folderContents[i].getName();
+            fileNames[i] = folderContents[i].getName().split("\\.")[0];
         }
         return fileNames;
     }

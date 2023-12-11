@@ -53,11 +53,25 @@ public class Minesweeper {
      * Constructor sets up game state.
      */
     public Minesweeper(int height, int width, int numBombs) {
-        this.height = height;
-        this.width = width;
-        this.numBombs = numBombs;
+        reset(height, width, numBombs);
+    }
 
-        reset();
+    /**
+     * reset (re-)sets the game state to start a new game.
+     */
+    public void reset(int h, int w, int b) {
+        height = h;
+        width = w;
+        numBombs = b;
+
+        bGenX = rand.nextInt(width);
+        bGenY = rand.nextInt(height);
+
+        map = new Box[height][width];
+        numTurns = 0;
+        gameOver = false;
+
+        newGame = true;
     }
 
     /**
@@ -346,20 +360,6 @@ public class Minesweeper {
             }
             System.out.println();
         }
-    }
-
-    /**
-     * reset (re-)sets the game state to start a new game.
-     */
-    public void reset() {
-        bGenX = rand.nextInt(width);
-        bGenY = rand.nextInt(height);
-
-        map = new Box[height][width];
-        numTurns = 0;
-        gameOver = false;
-
-        newGame = true;
     }
 
     /**

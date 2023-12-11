@@ -8,7 +8,8 @@ package org.cis1200.minesweeper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.io.IOException;
+import java.text.NumberFormat;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
@@ -62,7 +63,7 @@ public class RunMinesweeper implements Runnable {
 
         // Save Game Input Frame
         final JFrame saveFrame = new JFrame("Save Game");
-        saveFrame.setLocation(410, 300);
+        saveFrame.setLocation(500, 400);
 
         final JPanel save = new JPanel();
         save.setLayout(new FlowLayout());
@@ -70,20 +71,52 @@ public class RunMinesweeper implements Runnable {
 
         // Load Game Input Frame
         final JFrame loadFrame = new JFrame("Load Game");
-        loadFrame.setLocation(410, 300);
+        loadFrame.setLocation(500, 400);
 
         final JPanel load = new JPanel();
         load.setLayout(new FlowLayout());
         loadFrame.add(load);
 
+        final JFrame warningFrame = new JFrame();
+
+
         // Note here that when we add an action listener to the reset button, we
         // define it as an anonymous inner class that is an instance of
         // ActionListener with its actionPerformed() method overridden. When the
         // button is pressed, actionPerformed() will be called.
+        final JLabel timerText = new JLabel("Time: ");
+        final TimeClock timer = new TimeClock(timerText);
+        timer.reset();
+        control_panel.add(timerText);
+
+//        final JLabel numberTurns = new JLabel("Turns Taken: ");
+//        control_panel.add(numberTurns);
+
         final JButton pause = new JButton("Pause");
         pause.addActionListener(e -> homeScreen.setVisible(true));
         pause.setAlignmentX(Component.CENTER_ALIGNMENT);
         control_panel.add(pause);
+
+        final ButtonGroup difficulty = new ButtonGroup();
+        final JRadioButton easy = new JRadioButton("Easy");
+        final JRadioButton medium = new JRadioButton("Medium");
+        final JRadioButton hard = new JRadioButton("Hard");
+        hard.setSelected(true);
+        final JRadioButton custom = new JRadioButton("Custom: ");
+        final JTextField customWidth = new JTextField("Width");
+        final JTextField customHeight = new JTextField("Height");
+        difficulty.add(easy);
+        difficulty.add(medium);
+        difficulty.add(hard);
+        difficulty.add(custom);
+        pause.addActionListener(e -> homeScreen.setVisible(true));
+        pause.setAlignmentX(Component.CENTER_ALIGNMENT);
+        control_panel.add(easy);
+        control_panel.add(medium);
+        control_panel.add(hard);
+        control_panel.add(custom);
+        control_panel.add(customWidth);
+        control_panel.add(customHeight);
 
         final JButton resumeGame = new JButton("Resume");
         resumeGame.addActionListener(e -> homeScreen.setVisible(false));
@@ -92,7 +125,27 @@ public class RunMinesweeper implements Runnable {
 
         final JButton newGame = new JButton("New Game");
         newGame.addActionListener(e -> {
-            board.reset();
+            if (easy.isSelected()) {
+                board.reset(10, 8, 10);
+            } else if (medium.isSelected()) {
+                board.reset(12, 10, 24);
+            } else if (hard.isSelected()) {
+                board.reset(24, 20, 99);
+            } else if (custom.isSelected()) {
+                try{
+                    int height = Integer.parseInt(customHeight.getText());
+                    int width = Integer.parseInt(customWidth.getText());
+                    if (height < 6 && width < 6) {
+                        System.out.println("Size is too small, setting to default");
+                        height = 24;
+                        width = 20;
+                    }
+                    board.reset(height, width, (int) Math.ceil(((double) width) * ((double) height) /5));
+                } catch (NumberFormatException f) {
+                    System.out.println("Not a valid number");
+                }
+            }
+            timer.reset();
             homeScreen.setVisible(false);
         });
         newGame.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -136,7 +189,7 @@ public class RunMinesweeper implements Runnable {
         final JButton loadButton = new JButton("Load");
         loadButton.addActionListener(e -> {
             try {
-                board.loadGame(((String) loadInput.getSelectedValue()).split("\\.")[0]);
+                board.loadGame(((String) loadInput.getSelectedValue()));
                 board.repaint();
             } catch (RuntimeException f) {
                 System.out.println("Error loading game");
@@ -164,7 +217,7 @@ public class RunMinesweeper implements Runnable {
         loadFrame.setVisible(false);
 
         // Start the game
-        board.reset();
+        board.reset(24, 20, 99);
     }
 
     private void setLoad(JList list, String[] fileList) {
