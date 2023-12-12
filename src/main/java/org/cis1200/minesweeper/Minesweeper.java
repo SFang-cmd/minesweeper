@@ -1,9 +1,11 @@
 package org.cis1200.minesweeper;
 
 /**
- * CIS 120 HW09 - TicTacToe Demo
- * (c) University of Pennsylvania
+ * CIS 1200 HW09 - Minesweeper
+ * By: Sean Fang (CO 2027)
+ * Game structure inspired by game sample, TicTacToe:
  * Created by Bayley Tuch, Sabrina Green, and Nicolas Corona in Fall 2020.
+ * (c) University of Pennsylvania
  */
 
 import java.io.*;
@@ -11,42 +13,40 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
- * This class is a model for TicTacToe.
- * 
- * This game adheres to a Model-View-Controller design framework.
- * This framework is very effective for turn-based games. We
- * STRONGLY recommend you review these lecture slides, starting at
- * slide 8, for more details on Model-View-Controller:
- * https://www.seas.upenn.edu/~cis120/current/files/slides/lec36.pdf
- * 
- * This model is completely independent of the view and controller.
- * This is in keeping with the concept of modularity! We can play
- * the whole game from start to finish without ever drawing anything
- * on a screen or instantiating a Java Swing object.
- * 
- * Run this file to see the main method play a game of TicTacToe,
- * visualized with Strings printed to the console.
+ * This class is the main class for the processing behind Minesweeper
+ * It contains many helper methods, classes, and data structures that
+ * allow the game to run. Because the logic is self-contained in this class,
+ * The game is fully functional in this game, minus the graphics.
  */
 public class Minesweeper {
-    private int numTurns;
+    // Variables to track the game state
     private boolean gameOver;
+    private boolean gameWon;
+    private int remainingFlags;
+    private int remainingTiles;
 
     // Started new game boolean
     private boolean newGame;
+
+    // Track the info in each tile
     Box[][] map;
 
     // Random number generator
     Random rand = new Random();
 
-    // Bomb generation X and Y
+    // Variables to store bomb generation
     int bGenX;
     int bGenY;
 
+    // If bomb is revealed, store its location
     int bombX = 0;
     int bombY = 0;
 
+    // Store the size of the minesweeper grid
     int height;
     int width;
+
+    // Store the number of bombs that should be made given the minesweeper grid size
     private int numBombs;
 
     /**
@@ -63,15 +63,58 @@ public class Minesweeper {
         height = h;
         width = w;
         numBombs = b;
+        remainingFlags = b;
+        remainingTiles = (w * h) - b;
 
         bGenX = rand.nextInt(width);
         bGenY = rand.nextInt(height);
 
         map = new Box[height][width];
-        numTurns = 0;
         gameOver = false;
+        gameWon = false;
 
         newGame = true;
+    }
+
+    /**
+     * Makes a test game that is only 3x3 large. For JUnit Tests.
+     */
+    public void make3x3CentralMineTestGame() {
+        reset(3, 3, 1);
+        bGenX = 1;
+        bGenY = 1;
+        generateGame(3, 3, 1);
+
+        newGame = false;
+    }
+
+    /**
+     * Makes a test game that is only 5x5 large. For JUnit Tests.
+     */
+    public void make5x5CentralLine5MinesTestGame() {
+        reset(5, 5, 5);
+        bGenX = 2;
+        bGenY = 2;
+        map[0][2] = new BombBox(bGenX, bGenY);
+        map[1][2] = new BombBox(bGenX, bGenY);
+        map[2][2] = new BombBox(bGenX, bGenY);
+        map[3][2] = new BombBox(bGenX, bGenY);
+        map[4][2] = new BombBox(bGenX, bGenY);
+        generateGame(5, 5, 0);
+
+        newGame = false;
+    }
+
+    /**
+     * Makes a test game that has the mine in the bottom right corner
+     */
+    public void make3x3CornerMineTestGame() {
+        reset(3, 3, 1);
+        bGenX = 2;
+        bGenY = 2;
+        generateGame(3, 3, 1);
+
+        newGame = false;
     }
 
     /**
@@ -79,48 +122,75 @@ public class Minesweeper {
      * successful and false if a player tries to play in a location that is
      * taken or after the game has ended. If the turn is successful and the game
      * has not ended, the player is changed. If the turn is unsuccessful or the
-     * game has ended, the player is not changed.
+     * game has ended, the player is not changed. If it's a new game, the turn will
+     * generate a new map
      *
      * @param c column to play in
      * @param r row to play in
-     * @return whether the turn was successful
      */
-    public boolean playTurn(int c, int r) {
-//        if (map[r][c] == null || gameOver) {
-//            return false;
-//        }
+    public void playTurn(int c, int r) {
 
         if (newGame) {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    try{
+                    try {
                         map[r + j - 1][c + i - 1] = new NumberBox(c + i - 1, r + j - 1);
                     } catch (RuntimeException e) {
                         System.out.println("Out of bounds");
                     }
                 }
             }
-            generateGame(height,width,numBombs);
-            reveal(c,r);
+            generateGame(height, width, numBombs);
+            reveal(c, r);
             newGame = false;
             System.out.println("Game Generated");
         } else {
-            if (!map[r][c].isFlagged()){
-                System.out.println(map[r][c].isFlagged());
-                reveal(c,r);
+            if (!map[r][c].isFlagged()) {
+                reveal(c, r);
             }
             System.out.println("Game Square revealed");
         }
 
-        if(map[r][c].getShownVal() == 9) {
+        if (remainingTiles == 0) {
+            gameWon = true;
+        }
+
+        if (map[r][c].getShownVal() == 9) {
             System.out.println("Bomb hit");
             bombX = c;
             bombY = r;
             gameOver = true;
         }
         System.out.println("Turn finished");
-        numTurns++;
-        return true;
+    }
+
+    /**
+     * Creates a new minesweeper map, where the surrounding 3x3 grid is guaranteed
+     * to be empty squares, which means that the surrounding 5x5 grid does not
+     * contain
+     * a single bomb.
+     * 
+     * @param height   number of vertical tiles
+     * @param width    number of horizontal tiles
+     * @param numBombs number of desired bombs
+     */
+    public void generateGame(int height, int width, int numBombs) {
+        for (int r = 0; r < numBombs; r++) {
+            while ((map[bGenY][bGenX] != null) ||
+                    (touchesOpen(getAroundValues(bGenX, bGenY)))) {
+                bGenX = rand.nextInt(width);
+                bGenY = rand.nextInt(height);
+            }
+            map[bGenY][bGenX] = new BombBox(bGenX, bGenY);
+        }
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                if (map[j][i] == null) {
+                    map[j][i] = new NumberBox(i, j);
+                    map[j][i].setVal(getNumBombs(i, j));
+                }
+            }
+        }
     }
 
     /**
@@ -128,19 +198,20 @@ public class Minesweeper {
      * then if the box is an empty one, will reveal the 3-by-3 box
      * surrounding the box. If the surrounding box is a number,
      * the reveal recursion will stop (thus being a base case).
+     * 
      * @param c column in box map
      * @param r row in box map
      */
     public void reveal(int c, int r) {
         if (!map[r][c].isRevealed() && !map[r][c].isFlagged()) {
+            remainingTiles--;
             map[r][c].reveal();
-//            System.out.println(map[r][c].isFlagged());
-//            System.out.println(r);
-//            System.out.println(c);
+
             int startX;
             int endX;
             int startY;
             int endY;
+
             if (map[r][c].getVal() == 0) {
                 if (c == 0) {
                     startX = 1;
@@ -169,7 +240,9 @@ public class Minesweeper {
                         }
                     }
                 }
-
+                if (remainingTiles == 0) {
+                    gameWon = true;
+                }
             }
         }
     }
@@ -177,15 +250,16 @@ public class Minesweeper {
     /**
      * revealSurroundings calls reveal on the 3-by-3 (or less if on an edge)
      * so that the middle mouse-click functionality can work.
-     * @param c
-     * @param r
+     * 
+     * @param c column of tile who has surroundings revealed
+     * @param r row of tile who has surroundings revealed
      */
     public void revealSurroundings(int c, int r) {
         int startX;
         int endX;
         int startY;
         int endY;
-        if (map[r][c].isRevealed() && getNumFlags(c,r) == getNumBombs(c,r)) {
+        if (map[r][c].isRevealed() && getNumFlags(c, r) == getNumBombs(c, r)) {
             if (c == 0) {
                 startX = 1;
                 endX = 3;
@@ -210,7 +284,7 @@ public class Minesweeper {
                 for (int j = startY; j < endY; j++) {
                     if (!map[r + j - 1][c + i - 1].isFlagged()) {
                         reveal(c + i - 1, r + j - 1);
-                        if(map[r + j - 1][c + i - 1].getVal() == 9) {
+                        if (map[r + j - 1][c + i - 1].getVal() == 9) {
                             System.out.println("Bomb hit");
                             bombX = c;
                             bombY = r;
@@ -219,10 +293,19 @@ public class Minesweeper {
                     }
                 }
             }
-
+            if (remainingTiles == 0) {
+                gameWon = true;
+            }
         }
     }
 
+    /**
+     * Method takes in a box coordinate and returns its surrounding objects
+     * 
+     * @param c column of tile
+     * @param r row of tile
+     * @return 3x3 map of the surrounding boxes
+     */
     public Box[][] getAroundValues(int c, int r) {
         int startX;
         int endX;
@@ -252,7 +335,7 @@ public class Minesweeper {
             endY = 3;
         }
 
-        for(int i = startX; i < endX; i++){
+        for (int i = startX; i < endX; i++) {
             for (int j = startY; j < endY; j++) {
                 grid[i][j] = map[r + j - 1][c + i - 1];
             }
@@ -260,10 +343,18 @@ public class Minesweeper {
         return grid;
     }
 
+    /**
+     * Method uses the box coordinates to return the number of bombs in the
+     * surrounding boxes
+     * 
+     * @param c column of box
+     * @param r row of box
+     * @return number of bombs surrounding a box
+     */
     public int getNumBombs(int c, int r) {
         int totalBombs = 0;
-        for(Box[] row : getAroundValues(c,r)) {
-            for(Box elem : row) {
+        for (Box[] row : getAroundValues(c, r)) {
+            for (Box elem : row) {
                 if (elem != null)
                     totalBombs += elem.getVal() == 9 ? 1 : 0;
             }
@@ -271,10 +362,17 @@ public class Minesweeper {
         return totalBombs;
     }
 
+    /**
+     * Similar to getNumBombs, returns the number of flags around a specific box
+     * 
+     * @param c column of box
+     * @param r row of box
+     * @return number of flags placed around a box
+     */
     public int getNumFlags(int c, int r) {
         int totalBombs = 0;
-        for(Box[] row : getAroundValues(c,r)) {
-            for(Box elem : row) {
+        for (Box[] row : getAroundValues(c, r)) {
+            for (Box elem : row) {
                 if (elem != null)
                     totalBombs += elem.getShownVal() >= 10 ? 1 : 0;
             }
@@ -282,79 +380,95 @@ public class Minesweeper {
         return totalBombs;
     }
 
-    public int getBombX() {
-        return bombX;
-    }
-
-    public int getBombY() {
-        return bombY;
-    }
-
+    /**
+     * Used in game generation; checks to see if a bomb box has any empty
+     * boxes next to it (since this cannot happen, as it would need to be
+     * a numbered box)
+     * Ex. ____________
+     * |___|_B_|_1_|
+     * The left box cannot exist of the center box is a bomb, since
+     * the right box is the minimum number that needs to exist.
+     * 
+     * @param b the 3x3 grid that surrounds the bomb box.
+     * @return whether or not there is an empty square next to the bomb box
+     */
     public boolean touchesOpen(Box[][] b) {
-        for (int i = 0; i < 3; i++){
+        for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 try {
                     if (b[j][i].getVal() == 0) {
                         return true;
                     }
-                } catch (RuntimeException e) {
-//                    System.out.println("None");
+                } catch (RuntimeException ignored) {
+
                 }
             }
         }
         return false;
     }
 
-    public void generateGame(int height, int width, int numBombs) {
-        for (int r = 0; r < numBombs; r++) {
-            while ((map[bGenY][bGenX] != null) ||
-                    (touchesOpen(getAroundValues(bGenX, bGenY)))) {
-                bGenX = rand.nextInt(width);
-                bGenY = rand.nextInt(height);
-            }
-            map[bGenY][bGenX] = new BombBox(bGenX, bGenY);
-//            System.out.println(map[bGenY][bGenX].getVal());
-        }
-        // System.out.println(map[0][0]);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                if (map[j][i] == null){
-                    map[j][i] = new NumberBox(i, j);
-                    map[j][i].setVal(getNumBombs(i,j));
-                }
+    /**
+     * Flags the tile for the game
+     * 
+     * @param c column of tile
+     * @param r row of tile
+     */
+    public void flagTile(int c, int r) {
+        if (!map[r][c].isRevealed()) {
+            map[r][c].flag();
+            if (map[r][c].isFlagged()) {
+                remainingFlags--;
+            } else {
+                remainingFlags++;
             }
         }
     }
 
-    public void flagTile(int c, int r) {
-        map[r][c].flag();
+    public int getRemainingFlags() {
+        return remainingFlags;
+    }
+
+    public int getRemainingTiles() {
+        return remainingTiles;
     }
 
     /**
      * checkWinner checks whether the game has reached a win condition.
-     * checkWinner only looks for horizontal wins.
      *
-     * @return 0 if nobody has won yet, 1 if player 1 has won, and 2 if player 2
-     *         has won, 3 if the game hits stalemate
+     * @return true if game is over or false if game is not over
      */
     public boolean gameOver() {
         return gameOver;
     }
 
-    public boolean isFlagged(int c, int r) {
-        return map[r][c].isFlagged();
+    public boolean gameWon() {
+        return gameWon;
     }
 
     /**
      * printGameState prints the current game state
-     * for debugging.
+     * for debugging and/or simulating a play of the game
+     * from terminal
      */
     public void printGameState() {
-        System.out.println("\n\nTurn " + numTurns + ":\n");
+        System.out.println("\n\nNew Turn: \n");
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                if (map[i][j] != null){
-                    System.out.print(map[i][j].getVal());
+                if (map[i][j] != null) {
+                    int val = map[i][j].getShownVal();
+                    String empty;
+                    if (val >= 10) {
+                        empty = " ";
+                    } else if (val >= 0) {
+                        empty = "  ";
+                    } else if (val >= -9) {
+                        empty = " ";
+                    } else if (val == -10) {
+                        empty = "";
+                    } else {
+                        empty = "";
+                    }
+                    System.out.print(empty + val);
                 }
                 System.out.print(", ");
             }
@@ -368,13 +482,19 @@ public class Minesweeper {
      *
      * @param c column to retrieve
      * @param r row to retrieve
-     * @return an integer denoting the contents of the corresponding cell on the
-     *         game board. 0 = empty, 1 = Player 1, 2 = Player 2
+     * @return gets the raw value (numbers 0-8 or bomb (9)) of the cell
      */
     public int getCell(int c, int r) {
         return map[r][c].getVal();
     }
 
+    /**
+     * getCellShown gets the value of a given cell, accounting for
+     * 
+     * @param c
+     * @param r
+     * @return
+     */
     public int getCellShown(int c, int r) {
         try {
             return map[r][c].getShownVal();
@@ -384,20 +504,10 @@ public class Minesweeper {
     }
 
     /**
-     * This main method illustrates how the model is completely independent of
-     * the view and controller. We can play the game from start to finish
-     * without ever creating a Java Swing object.
-     *
-     * This is modularity in action, and modularity is the bedrock of the
-     * Model-View-Controller design framework.
-     *
-     * Run this file to see the output of this method in your console.
-     */
-
-    /**
      * Saves the current game state in a file. Format is:
-     * Line 1: height, width, numBombs, numTurns, gameOver, newGame, bombX, bombY
+     * Line 1: height, width, numBombs, gameOver, newGame, bombX, bombY
      * Line 2-max height is the rest of the game board's states, with
+     * 
      * @param fileName name of saved game
      */
     public void saveGameState(String fileName) {
@@ -408,14 +518,17 @@ public class Minesweeper {
         String filePath = "saves/" + fileName + ".csv";
         try {
             file = new File(filePath);
-            if(file.createNewFile()){
+            if (file.createNewFile()) {
                 System.out.println(filePath + " File Created");
             } else {
                 System.out.println("File " + filePath + " already exists");
             }
             BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-            writer.write(height + "," + width + "," + numBombs + "," + numTurns + "," +
-                    gameOver + "," + newGame + "," + bombX + "," + bombY);
+            writer.write(
+                    height + "," + width + "," + numBombs + "," +
+                            gameOver + "," + newGame + "," + bombX + "," + bombY + "," +
+                            gameWon + "," + remainingFlags + "," + remainingTiles
+            );
             writer.newLine();
             for (int j = 0; j < height; j++) {
                 for (int i = 0; i < width; i++) {
@@ -454,11 +567,13 @@ public class Minesweeper {
                 height = Integer.parseInt(gameSets[0]);
                 width = Integer.parseInt(gameSets[1]);
                 numBombs = Integer.parseInt(gameSets[2]);
-                numTurns = Integer.parseInt(gameSets[3]);
-                gameOver = Boolean.parseBoolean(gameSets[4]);
-                newGame = Boolean.parseBoolean(gameSets[5]);
-                bombX = Integer.parseInt(gameSets[6]);
-                bombY = Integer.parseInt(gameSets[7]);
+                gameOver = Boolean.parseBoolean(gameSets[3]);
+                newGame = Boolean.parseBoolean(gameSets[4]);
+                bombX = Integer.parseInt(gameSets[5]);
+                bombY = Integer.parseInt(gameSets[6]);
+                gameWon = Boolean.parseBoolean(gameSets[7]);
+                remainingFlags = Integer.parseInt(gameSets[8]);
+                remainingTiles = Integer.parseInt(gameSets[9]);
             }
             map = new Box[height][width];
             for (int j = 0; j < height; j++) {
@@ -470,9 +585,9 @@ public class Minesweeper {
                 for (int i = 0; i < width; i++) {
                     boxValue = Integer.parseInt(rowList[i]);
                     if ((boxValue + 10) % 10 == 9) {
-                        map[j][i] = new BombBox(i,j);
+                        map[j][i] = new BombBox(i, j);
                     } else {
-                        map[j][i] = new NumberBox(i,j,(boxValue + 10) % 10);
+                        map[j][i] = new NumberBox(i, j, (boxValue + 10) % 10);
                     }
                     if (boxValue >= 10) {
                         map[j][i].flag();
@@ -487,7 +602,7 @@ public class Minesweeper {
     }
 
     public static void main(String[] args) {
-        Minesweeper t = new Minesweeper(10,10,20);
+        Minesweeper t = new Minesweeper(10, 10, 20);
 
         t.playTurn(1, 1);
         t.printGameState();

@@ -46,9 +46,15 @@ public class RunMinesweeper implements Runnable {
         final GameBoard board = new GameBoard(status);
         frame.add(board, BorderLayout.CENTER);
 
-        // Reset button
+        final JPanel top_panel = new JPanel();
+        top_panel.setPreferredSize(new Dimension(600, 80));
+        frame.add(top_panel, BorderLayout.NORTH);
+
+        final JPanel display_panel = new JPanel();
+        top_panel.add(display_panel);
+
         final JPanel control_panel = new JPanel();
-        frame.add(control_panel, BorderLayout.NORTH);
+        top_panel.add(control_panel);
 
         // Title Screen and settings page
         final JFrame homeScreen = new JFrame("Minesweeper");
@@ -77,22 +83,31 @@ public class RunMinesweeper implements Runnable {
         load.setLayout(new FlowLayout());
         loadFrame.add(load);
 
-        final JFrame warningFrame = new JFrame();
+        final JFrame instructionsFrame = new JFrame("Instructions");
+        instructionsFrame.setLocation(410, 200);
+        instructionsFrame.setPreferredSize(new Dimension(470, 720));
 
+        final JPanel instructions = new JPanel();
+        instructions.setLayout(new FlowLayout(FlowLayout.LEFT));
+        instructionsFrame.add(instructions);
 
         // Note here that when we add an action listener to the reset button, we
         // define it as an anonymous inner class that is an instance of
         // ActionListener with its actionPerformed() method overridden. When the
         // button is pressed, actionPerformed() will be called.
+        final JLabel turnText = new JLabel("Tiles Left:  Flags Left: ");
+        final TurnClock turns = new TurnClock(turnText, board);
+        display_panel.add(turnText);
+
         final JLabel timerText = new JLabel("Time: ");
         final TimeClock timer = new TimeClock(timerText);
         timer.reset();
-        control_panel.add(timerText);
+        display_panel.add(timerText);
 
-//        final JLabel numberTurns = new JLabel("Turns Taken: ");
-//        control_panel.add(numberTurns);
+        // final JLabel numberTurns = new JLabel("Turns Taken: ");
+        // control_panel.add(numberTurns);
 
-        final JButton pause = new JButton("Pause");
+        final JButton pause = new JButton("Settings");
         pause.addActionListener(e -> homeScreen.setVisible(true));
         pause.setAlignmentX(Component.CENTER_ALIGNMENT);
         control_panel.add(pause);
@@ -118,7 +133,12 @@ public class RunMinesweeper implements Runnable {
         control_panel.add(customWidth);
         control_panel.add(customHeight);
 
-        final JButton resumeGame = new JButton("Resume");
+        final JButton instructionsButton = new JButton("How to Play");
+        instructionsButton.addActionListener(e -> instructionsFrame.setVisible(true));
+        instructionsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.add(instructionsButton);
+
+        final JButton resumeGame = new JButton("Resume Game");
         resumeGame.addActionListener(e -> homeScreen.setVisible(false));
         resumeGame.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.add(resumeGame);
@@ -132,7 +152,7 @@ public class RunMinesweeper implements Runnable {
             } else if (hard.isSelected()) {
                 board.reset(24, 20, 99);
             } else if (custom.isSelected()) {
-                try{
+                try {
                     int height = Integer.parseInt(customHeight.getText());
                     int width = Integer.parseInt(customWidth.getText());
                     if (height < 6 && width < 6) {
@@ -140,7 +160,9 @@ public class RunMinesweeper implements Runnable {
                         height = 24;
                         width = 20;
                     }
-                    board.reset(height, width, (int) Math.ceil(((double) width) * ((double) height) /5));
+                    board.reset(
+                            height, width, (int) Math.ceil(((double) width) * ((double) height) / 5)
+                    );
                 } catch (NumberFormatException f) {
                     System.out.println("Not a valid number");
                 }
@@ -163,6 +185,39 @@ public class RunMinesweeper implements Runnable {
         });
         loadGame.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.add(loadGame);
+
+        ///////////
+        final JLabel instructionLabel = new JLabel("Instructions:");
+        instructions.add(instructionLabel);
+
+        final JTextArea instructionsText = new JTextArea("""
+                Welcome to minesweeper! As the player, your job is to win the game\n
+                by finding all the mines on the field. Tiles surrounding bombs will\n
+                tell you how many bombs are around them, while empty tiles means that\n
+                the surrounding tiles don't have bombs around them.\n
+                \n
+                How to play:\n
+                - Left Click: Reveal tile\n
+                - Right Click: Flag tile\n
+                - Middle Click: Reveal surrounding non-flagged tiles\n
+                \n
+                Additional Features:\n
+                - Change the difficulty using the buttons on the top panel. You can
+                also use the custom button to create your own custom difficulty by
+                filling out the desired vertical and horizontal number of tiles.\n
+                - Use the settings button to reveal the ability to:\n
+                    > Check these instructions again\n
+                    > Resume current game\n
+                    > Start new game\n
+                    > Save current game\n
+                    > Load previous game\n
+                """);
+        instructionsText.setEditable(false);
+        instructions.add(instructionsText);
+
+        final JButton closeInsButton = new JButton("Close");
+        closeInsButton.addActionListener(e -> instructionsFrame.setVisible(false));
+        instructions.add(closeInsButton);
 
         ///////////
         final JLabel saveLabel = new JLabel("Name your save: ");
@@ -207,6 +262,10 @@ public class RunMinesweeper implements Runnable {
         homeScreen.pack();
         homeScreen.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         homeScreen.setVisible(false);
+
+        instructionsFrame.pack();
+        instructionsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        instructionsFrame.setVisible(false);
 
         saveFrame.pack();
         saveFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

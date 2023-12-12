@@ -3,7 +3,7 @@ package org.cis1200.minesweeper;
 import java.awt.*;
 import javax.swing.*;
 
-public class TimeClock extends JPanel{
+public class TimeClock extends JPanel {
 
     public static final int INTERVAL = 1000;
     public int timeText = 0;
@@ -24,7 +24,7 @@ public class TimeClock extends JPanel{
     }
 
     public void displayTime() {
-        displayText.setText("Timer: " + timeText);
+        displayText.setText("   -::|::-   Time: " + timeText);
     }
 
     public void reset() {

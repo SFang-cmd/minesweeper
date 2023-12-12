@@ -1,7 +1,7 @@
 package org.cis1200.minesweeper;
 
 public abstract class Box {
-    
+
     public int y;
     public int x;
     public int val;
@@ -9,9 +9,8 @@ public abstract class Box {
     public int[][] map;
     public boolean flagged;
     public boolean previewed;
-    
+
     public Box(int x, int y) {
-        this.map = map;
         this.x = x;
         this.y = y;
         this.shown = false;
@@ -41,7 +40,7 @@ public abstract class Box {
     public void reveal() {
         shown = true;
     }
-    
+
     public boolean isRevealed() {
         return shown;
     }
@@ -56,11 +55,6 @@ public abstract class Box {
         return flagged;
     }
 
-    public boolean isHidden() {
-        return shown;
-    }
-
     public void setVal(int val) {
-
     }
 }

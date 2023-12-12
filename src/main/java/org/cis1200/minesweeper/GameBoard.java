@@ -53,18 +53,18 @@ public class GameBoard extends JPanel {
     private JLabel status; // current status text
 
     // Game constants
-    public static final int BOARD_WIDTH = 700;
-    public static final int BOARD_HEIGHT = 840;
+    public static final int BOARD_WIDTH = 620;
+    public static final int BOARD_HEIGHT = 744;
 
-    //Size of the map (can be changed later)
+    // Size of the map (can be changed later)
     int width = 20;
-//    int width = 10;
+    // int width = 10;
     int height = 24;
-//    int height = 8;
+    // int height = 8;
 
-    //Number of bombs to be generated
+    // Number of bombs to be generated
     int numBombs = 99;
-//    int numBombs = 10;
+    // int numBombs = 10;
 
     int boxWidth;
     int boxHeight;
@@ -96,8 +96,8 @@ public class GameBoard extends JPanel {
     public GameBoard(JLabel statusInit) {
         // first location for the bomb to be placed in the grid
 
-        boxWidth = BOARD_WIDTH/width;
-        boxHeight = BOARD_HEIGHT/height;
+        boxWidth = BOARD_WIDTH / width;
+        boxHeight = BOARD_HEIGHT / height;
 
         try {
             if (hidden == null) {
@@ -156,36 +156,75 @@ public class GameBoard extends JPanel {
         mnswp = new Minesweeper(height, width, numBombs); // initializes model for the game
         status = statusInit; // initializes the status JLabel
 
+        final JFrame winFrame = new JFrame("You Won!");
+        final JPanel win = new JPanel();
+        winFrame.setPreferredSize(new Dimension(310, 75));
+        winFrame.setLocation(500, 300);
+        final JLabel winLabel = new JLabel("Congrats! You Successfully Cleared the mines!");
+        final JButton resetButton = new JButton("Replay");
+        resetButton.addActionListener(e -> {
+            reset(height, width, numBombs);
+            winFrame.setVisible(false);
+        });
+
+        winFrame.add(win);
+        win.add(winLabel);
+        win.add(resetButton);
+
+        winFrame.pack();
+        winFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        winFrame.setVisible(false);
+
+        final JFrame loseFrame = new JFrame("You Lost!");
+        final JPanel lose = new JPanel();
+        loseFrame.setPreferredSize(new Dimension(310, 75));
+        loseFrame.setLocation(500, 300);
+        final JLabel loseLabel = new JLabel("Womp womp, better luck next time! Play again?");
+        final JButton replayButton = new JButton("Replay");
+        replayButton.addActionListener(e -> {
+            reset(height, width, numBombs);
+            loseFrame.setVisible(false);
+        });
+
+        loseFrame.add(lose);
+        lose.add(loseLabel);
+        lose.add(replayButton);
+
+        loseFrame.pack();
+        loseFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        loseFrame.setVisible(false);
+
         /*
          * Listens for mouseclicks. Updates the model, then updates the game
          * board based off of the updated model.
          */
         addMouseListener(new MouseAdapter() {
-//             @Override
-//             public void mouseReleased(MouseEvent e) {
-//                 Point p = e.getPoint();
-//                 mnswp.hidePreview(p.x/boxWidth, p.y/boxHeight);
-//             }
+            // @Override
+            // public void mouseReleased(MouseEvent e) {
+            // Point p = e.getPoint();
+            // mnswp.hidePreview(p.x/boxWidth, p.y/boxHeight);
+            // }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 Point p = e.getPoint();
 
                 // updates the model given the coordinates of the mouseclick
-//                System.out.println((width * p.x) / BOARD_WIDTH);
-//                System.out.println((height * p.y) / BOARD_HEIGHT);
-//                System.out.println(p.x);
-//                System.out.println(p.y);
-//                System.out.println(boxWidth);
-//                System.out.println(boxHeight);
-                if (!mnswp.gameOver()) {
+
+                if (!mnswp.gameOver() && !mnswp.gameWon()) {
                     if (e.getButton() == 1) {
-                        mnswp.playTurn(p.x/boxWidth, p.y/boxHeight);
+                        mnswp.playTurn(p.x / boxWidth, p.y / boxHeight);
                     } else if (e.getButton() == 3) {
-                        mnswp.flagTile(p.x/boxWidth, p.y/boxHeight);
+                        mnswp.flagTile(p.x / boxWidth, p.y / boxHeight);
                     } else if (e.getButton() == 2) {
-                        mnswp.revealSurroundings(p.x/boxWidth, p.y/boxHeight);
+                        mnswp.revealSurroundings(p.x / boxWidth, p.y / boxHeight);
                     }
+                }
+
+                if (mnswp.gameWon()) {
+                    winFrame.setVisible(true);
+                } else if (mnswp.gameOver()) {
+                    loseFrame.setVisible(true);
                 }
 
                 updateStatus(); // updates the status JLabel
@@ -202,8 +241,8 @@ public class GameBoard extends JPanel {
         this.width = width;
         this.numBombs = numBombs;
 
-        boxWidth = BOARD_WIDTH/this.width;
-        boxHeight = BOARD_HEIGHT/this.height;
+        boxWidth = BOARD_WIDTH / this.width;
+        boxHeight = BOARD_HEIGHT / this.height;
 
         mnswp.reset(this.height, this.width, this.numBombs);
         status.setText("~~<PLAY MINESWEEPER>~~");
@@ -230,6 +269,14 @@ public class GameBoard extends JPanel {
 
     public void loadGame(String fileName) {
         mnswp.loadGame(fileName);
+    }
+
+    public int getRemainingFlags() {
+        return mnswp.getRemainingFlags();
+    }
+
+    public int getRemainingTiles() {
+        return mnswp.getRemainingTiles();
     }
 
     public String[] getLoads() {
@@ -273,68 +320,99 @@ public class GameBoard extends JPanel {
                 int state = mnswp.getCellShown(i, j);
                 if (!mnswp.gameOver()) {
                     if (state >= 10) {
-                        g.drawImage(flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state <= -1) {
-                        g.drawImage(hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 0) {
-                        g.drawImage(empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 1) {
-                        g.drawImage(box1, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box1, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 2) {
-                        g.drawImage(box2, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box2, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 3) {
-                        g.drawImage(box3, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box3, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 4) {
-                        g.drawImage(box4, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box4, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 5) {
-                        g.drawImage(box5, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box5, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 6) {
-                        g.drawImage(box6, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box6, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 7) {
-                        g.drawImage(box7, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box7, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 8) {
-                        g.drawImage(box8, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(box8, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
                     } else if (state == 9) {
-                        g.drawImage(redBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        g.drawImage(
+                                redBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                        );
                     }
 
                 } else {
                     try {
-                        if(state <= -1) {
-                            g.drawImage(hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                        if (state <= -1) {
+                            g.drawImage(
+                                    hidden, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                             if (mnswp.getCell(i, j) == 9) {
-                                g.drawImage(bomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
+                                g.drawImage(
+                                        bomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                                );
                             }
                         } else if (state == 9) {
-                            g.drawImage(redBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    redBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (mnswp.getCell(i, j) != 9 && state >= 10) {
-                            g.drawImage(noBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null);
+                            g.drawImage(
+                                    noBomb, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state >= 10) {
-                            g.drawImage(flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    flag, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 0) {
-                            g.drawImage(empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    empty, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 1) {
-                            g.drawImage(box1, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box1, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 2) {
-                            g.drawImage(box2, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box2, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 3) {
-                            g.drawImage(box3, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box3, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 4) {
-                            g.drawImage(box4, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box4, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 5) {
-                            g.drawImage(box5, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box5, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 6) {
-                            g.drawImage(box6, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box6, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 7) {
-                            g.drawImage(box7, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box7, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         } else if (state == 8) {
-                            g.drawImage(box8, boxWidth * i, boxHeight * j, boxWidth, boxHeight,null);
+                            g.drawImage(
+                                    box8, boxWidth * i, boxHeight * j, boxWidth, boxHeight, null
+                            );
                         }
                     } catch (RuntimeException ignored) {
 
                     }
                 }
-//                g.drawString(Integer.toString(state), (boxWidth * i + (boxWidth/2)), (boxHeight * j + (boxHeight/2)));
+                // g.drawString(Integer.toString(state), (boxWidth * i + (boxWidth/2)),
+                // (boxHeight * j + (boxHeight/2)));
             }
         }
     }
