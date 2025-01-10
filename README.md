@@ -1,9 +1,9 @@
-### Minesweeper
+# Minesweeper
 
 ## About
 
 Classic Minesweeper game programmed in Java.
-# Features:
+## Features:
 1. Small, Medium, Large, and Custom grid sizes
 2. Save Game feature to save and load multiple games
 3. Middle Mouse support and classic design decisions
