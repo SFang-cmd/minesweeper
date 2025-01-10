@@ -14,7 +14,8 @@ Classic Minesweeper game programmed in Java.
 ## To Play the Game:
 Download the .jar file found in **Releases**
 
+Run from terminal using:
+`java -jar PlayMinesweeper.jar`
+
 ## To Mess with the Game:
-To check out the full game code with my amazing documentation, 
-download the source code directly, or use git clone to grab the source
-code from this repository. Run using the main method in the Game.java file
+To check out the full game code with my amazing documentation, download the source code directly, or use git clone to grab the source code from this repository. Run using the main method in the Game.java file
