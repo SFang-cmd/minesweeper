@@ -1,0 +1,14 @@
+# Building and Compiling
+target
+
+# IDEA native
+.idea
+
+# Local run
+.run
+
+# Local project saves
+saves
+
+# random stuff
+hw09.iml

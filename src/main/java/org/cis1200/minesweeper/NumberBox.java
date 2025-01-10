@@ -1,5 +1,9 @@
 package org.cis1200.minesweeper;
 
+/**
+ * The number and non-bomb box class, which deals with understanding the values
+ * at each box and storing their values
+ */
 public class NumberBox extends Box {
 
     public NumberBox(int x, int y) {

@@ -1,32 +1,27 @@
 package org.cis1200.minesweeper;
 
-/*
- * CIS 120 HW09 - TicTacToe Demo
- * (c) University of Pennsylvania
- * Created by Bayley Tuch, Sabrina Green, and Nicolas Corona in Fall 2020.
- */
-
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.text.NumberFormat;
+import java.net.URL;
 
 /**
  * This class sets up the top-level frame and widgets for the GUI.
  * 
- * This game adheres to a Model-View-Controller design framework. This
- * framework is very effective for turn-based games. We STRONGLY
- * recommend you review these lecture slides, starting at slide 8,
- * for more details on Model-View-Controller:
- * https://www.seas.upenn.edu/~cis120/current/files/slides/lec37.pdf
- * 
- * In a Model-View-Controller framework, Game initializes the view,
- * implements a bit of controller functionality through the reset
- * button, and then instantiates a GameBoard. The GameBoard will
- * handle the rest of the game's view and controller functionality, and
- * it will instantiate a TicTacToe object to serve as the game's model.
+ * This game adheres to a Model-View-Controller design framework.
  */
 public class RunMinesweeper implements Runnable {
+
+    /**
+     * Creates helper function for image export to executable
+     */
+    public JLabel createImageLabel(String resourcePath) {
+        URL imageUrl = getClass().getResource(resourcePath);
+        if (imageUrl == null) {
+            throw new RuntimeException("Could not find resource: " + resourcePath);
+        }
+        return new JLabel(new ImageIcon(imageUrl));
+    }
+
     public void run() {
 
         final JList loadInput = new JList();
@@ -63,7 +58,7 @@ public class RunMinesweeper implements Runnable {
         final JPanel title = new JPanel();
         title.setLayout(new BoxLayout(title, BoxLayout.PAGE_AXIS));
         homeScreen.add(title);
-        final JLabel gameLogo = new JLabel(new ImageIcon("files/MinesweeperTitle.png"));
+        final JLabel gameLogo = createImageLabel("/files/MinesweeperTitle.png");
         gameLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
         title.add(gameLogo);
 

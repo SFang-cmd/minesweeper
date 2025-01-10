@@ -3,6 +3,9 @@ package org.cis1200.minesweeper;
 import java.awt.*;
 import javax.swing.*;
 
+/**
+ * Class that tracks game time elapsed and displays this information
+ */
 public class TimeClock extends JPanel {
 
     public static final int INTERVAL = 1000;

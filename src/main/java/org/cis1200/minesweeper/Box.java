@@ -1,5 +1,10 @@
 package org.cis1200.minesweeper;
 
+/**
+ * Abstract class for all boxes, which are implemented within Bomb Box and Number Box.
+ * Is hidden until the box is revealed, in which case
+ * it just displays the number or a blank box
+ */
 public abstract class Box {
 
     public int y;

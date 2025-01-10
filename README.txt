@@ -1,7 +1,4 @@
 =:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
-CIS 1200 Game Project README
-PennKey: Sefang
-=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
 
 ===================
 =: Core Concepts :=
@@ -69,11 +66,3 @@ PennKey: Sefang
 
   I struggled a bit with the separation of UI between GameBoard and RunMinesweeper, but other than that, most of the
   rest of it is encapsulated.
-
-
-========================
-=: External Resources :=
-========================
-
-- Cite any external resources (images, tutorials, etc.) that you may have used 
-  while implementing your game.

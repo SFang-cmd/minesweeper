@@ -13,10 +13,11 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
- * This class is the main class for the processing behind Minesweeper
+ * This class deals with the primary logic behind the Minesweeper game.
  * It contains many helper methods, classes, and data structures that
  * allow the game to run. Because the logic is self-contained in this class,
- * The game is fully functional in this game, minus the graphics.
+ * you can play Minesweeper using tihs class.
+ * The graphics are separately dealt with within GameBoard
  */
 public class Minesweeper {
     // Variables to track the game state
@@ -503,6 +504,15 @@ public class Minesweeper {
         }
     }
 
+    private File getSaveDirectory() {
+        String userHome = System.getProperty("user.home");
+        File saveDir = new File(userHome, "MinesweeperSaves");
+        if (!saveDir.exists()) {
+            saveDir.mkdirs();
+        }
+        return saveDir;
+    }
+
     /**
      * Saves the current game state in a file. Format is:
      * Line 1: height, width, numBombs, gameOver, newGame, bombX, bombY
@@ -514,36 +524,37 @@ public class Minesweeper {
         if (fileName == null) {
             throw new IllegalArgumentException();
         }
-        File file;
-        String filePath = "saves/" + fileName + ".csv";
-        try {
-            file = new File(filePath);
-            if (file.createNewFile()) {
-                System.out.println(filePath + " File Created");
-            } else {
-                System.out.println("File " + filePath + " already exists");
-            }
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-            writer.write(
-                    height + "," + width + "," + numBombs + "," +
-                            gameOver + "," + newGame + "," + bombX + "," + bombY + "," +
-                            gameWon + "," + remainingFlags + "," + remainingTiles
-            );
-            writer.newLine();
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
-                    writer.write(Integer.toString(map[j][i].getShownVal()));
-                    if (i != width - 1) {
-                        writer.write(",");
-                    }
-                }
-                writer.newLine();
-            }
-            writer.flush();
-            writer.close();
 
+        File saveDir = getSaveDirectory();
+        File file = new File(saveDir, fileName + ".csv");
+
+        try {
+            if (file.createNewFile()) {
+                System.out.println(file.getPath() + " File Created");
+            } else {
+                System.out.println("File " + file.getPath() + " already exists");
+            }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                writer.write(
+                        height + "," + width + "," + numBombs + "," +
+                                gameOver + "," + newGame + "," + bombX + "," + bombY + "," +
+                                gameWon + "," + remainingFlags + "," + remainingTiles
+                );
+                writer.newLine();
+                for (int j = 0; j < height; j++) {
+                    for (int i = 0; i < width; i++) {
+                        writer.write(Integer.toString(map[j][i].getShownVal()));
+                        if (i != width - 1) {
+                            writer.write(",");
+                        }
+                    }
+                    writer.newLine();
+                }
+                writer.flush();
+            }
         } catch (RuntimeException | IOException e) {
             System.out.println("Make file error encountered: " + e.getMessage());
+            throw new RuntimeException("Failed to save game", e);
         }
     }
 
@@ -551,39 +562,41 @@ public class Minesweeper {
         if (fileName == null) {
             throw new IllegalArgumentException();
         }
-        File file;
-        String filePath = "saves/" + fileName + ".csv";
-        String gameConfig;
-        String[] gameSets;
-        String readRow;
-        String[] rowList;
-        int boxValue;
-        try {
-            file = new File(filePath);
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            if (reader.ready()) {
-                gameConfig = reader.readLine();
-                gameSets = gameConfig.split(",");
-                height = Integer.parseInt(gameSets[0]);
-                width = Integer.parseInt(gameSets[1]);
-                numBombs = Integer.parseInt(gameSets[2]);
-                gameOver = Boolean.parseBoolean(gameSets[3]);
-                newGame = Boolean.parseBoolean(gameSets[4]);
-                bombX = Integer.parseInt(gameSets[5]);
-                bombY = Integer.parseInt(gameSets[6]);
-                gameWon = Boolean.parseBoolean(gameSets[7]);
-                remainingFlags = Integer.parseInt(gameSets[8]);
-                remainingTiles = Integer.parseInt(gameSets[9]);
+        File saveDir = getSaveDirectory();
+        File file = new File(saveDir, fileName + ".csv");
+
+        if (!file.exists()) {
+            throw new RuntimeException("Save file not found: " + file.getPath());
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String gameConfig = reader.readLine();
+            if (gameConfig == null) {
+                throw new RuntimeException("Save file is empty");
             }
+
+            String[] gameSets = gameConfig.split(",");
+            height = Integer.parseInt(gameSets[0]);
+            width = Integer.parseInt(gameSets[1]);
+            numBombs = Integer.parseInt(gameSets[2]);
+            gameOver = Boolean.parseBoolean(gameSets[3]);
+            newGame = Boolean.parseBoolean(gameSets[4]);
+            bombX = Integer.parseInt(gameSets[5]);
+            bombY = Integer.parseInt(gameSets[6]);
+            gameWon = Boolean.parseBoolean(gameSets[7]);
+            remainingFlags = Integer.parseInt(gameSets[8]);
+            remainingTiles = Integer.parseInt(gameSets[9]);
+
             map = new Box[height][width];
             for (int j = 0; j < height; j++) {
-                if (!reader.ready()) {
-                    throw new NoSuchElementException();
+                String readRow = reader.readLine();
+                if (readRow == null) {
+                    throw new RuntimeException("Incomplete save file");
                 }
-                readRow = reader.readLine();
-                rowList = readRow.split(",");
+
+                String[] rowList = readRow.split(",");
                 for (int i = 0; i < width; i++) {
-                    boxValue = Integer.parseInt(rowList[i]);
+                    int boxValue = Integer.parseInt(rowList[i]);
                     if ((boxValue + 10) % 10 == 9) {
                         map[j][i] = new BombBox(i, j);
                     } else {
@@ -596,8 +609,9 @@ public class Minesweeper {
                     }
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Invalid File");
+        } catch (IOException | ArrayIndexOutOfBoundsException | NumberFormatException e) {
+            System.out.println("Load error: " + e.getMessage());
+            throw new RuntimeException("Failed to load game", e);
         }
     }
 

@@ -1,11 +1,5 @@
 package org.cis1200.minesweeper;
 
-/*
- * CIS 120 HW09 - TicTacToe Demo
- * (c) University of Pennsylvania
- * Created by Bayley Tuch, Sabrina Green, and Nicolas Corona in Fall 2020.
- */
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -14,40 +8,28 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * This class instantiates a TicTacToe object, which is the model for the game.
- * As the user clicks the game board, the model is updated. Whenever the model
- * is updated, the game board repaints itself and updates its status JLabel to
- * reflect the current state of the model.
- * 
- * This game adheres to a Model-View-Controller design framework. This
- * framework is very effective for turn-based games. We STRONGLY
- * recommend you review these lecture slides, starting at slide 8,
- * for more details on Model-View-Controller:
- * https://www.seas.upenn.edu/~cis120/current/files/slides/lec37.pdf
- * 
- * In a Model-View-Controller framework, GameBoard stores the model as a field
- * and acts as both the controller (with a MouseListener) and the view (with
- * its paintComponent method and the status JLabel).
+ * Game board that deals with graphics and all UI concerns
  */
 @SuppressWarnings("serial")
 public class GameBoard extends JPanel {
 
-    public static final String TILE_1_FILE = "files/mswp_1.png";
-    public static final String TILE_2_FILE = "files/mswp_2.png";
-    public static final String TILE_3_FILE = "files/mswp_3.png";
-    public static final String TILE_4_FILE = "files/mswp_4.png";
-    public static final String TILE_5_FILE = "files/mswp_5.png";
-    public static final String TILE_6_FILE = "files/mswp_6.png";
-    public static final String TILE_7_FILE = "files/mswp_7.png";
-    public static final String TILE_8_FILE = "files/mswp_8.png";
-    public static final String TILE_BOMB_FILE = "files/mswp_bomb.png";
-    public static final String TILE_RED_BOMB_FILE = "files/mswp_red_bomb.png";
-    public static final String TILE_NO_BOMB_FILE = "files/mswp_no_bomb.png";
-    public static final String TILE_HIDDEN_FILE = "files/mswp_hidden.png";
-    public static final String TILE_EMPTY_FILE = "files/mswp_empty.png";
-    public static final String TILE_FLAG_FILE = "files/mswp_flag.png";
+    public static final String TILE_1_FILE = "/files/mswp_1.png";
+    public static final String TILE_2_FILE = "/files/mswp_2.png";
+    public static final String TILE_3_FILE = "/files/mswp_3.png";
+    public static final String TILE_4_FILE = "/files/mswp_4.png";
+    public static final String TILE_5_FILE = "/files/mswp_5.png";
+    public static final String TILE_6_FILE = "/files/mswp_6.png";
+    public static final String TILE_7_FILE = "/files/mswp_7.png";
+    public static final String TILE_8_FILE = "/files/mswp_8.png";
+    public static final String TILE_BOMB_FILE = "/files/mswp_bomb.png";
+    public static final String TILE_RED_BOMB_FILE = "/files/mswp_red_bomb.png";
+    public static final String TILE_NO_BOMB_FILE = "/files/mswp_no_bomb.png";
+    public static final String TILE_HIDDEN_FILE = "/files/mswp_hidden.png";
+    public static final String TILE_EMPTY_FILE = "/files/mswp_empty.png";
+    public static final String TILE_FLAG_FILE = "/files/mswp_flag.png";
 
     private Minesweeper mnswp; // model for the game
     private JLabel status; // current status text
@@ -91,6 +73,22 @@ public class GameBoard extends JPanel {
     private final int mPeriod = 1000; // Ticks every 1 second
 
     /**
+     * Helper function that loads images depending on Production
+     */
+    public BufferedImage loadImage(String path) {
+        try {
+            InputStream is = getClass().getResourceAsStream(path);
+            if (is == null) {
+                // Fallback to file system during development
+                return ImageIO.read(new File("src/main/resources" + path));
+            }
+            return ImageIO.read(is);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load image: " + path, e);
+        }
+    }
+
+    /**
      * Initializes the game board.
      */
     public GameBoard(JLabel statusInit) {
@@ -101,49 +99,49 @@ public class GameBoard extends JPanel {
 
         try {
             if (hidden == null) {
-                hidden = ImageIO.read(new File(TILE_HIDDEN_FILE));
+                hidden = loadImage(TILE_HIDDEN_FILE);
             }
             if (empty == null) {
-                empty = ImageIO.read(new File(TILE_EMPTY_FILE));
+                empty = loadImage(TILE_EMPTY_FILE);
             }
             if (bomb == null) {
-                bomb = ImageIO.read(new File(TILE_BOMB_FILE));
+                bomb = loadImage(TILE_BOMB_FILE);
             }
             if (flag == null) {
-                flag = ImageIO.read(new File(TILE_FLAG_FILE));
+                flag = loadImage(TILE_FLAG_FILE);
             }
             if (box1 == null) {
-                box1 = ImageIO.read(new File(TILE_1_FILE));
+                box1 = loadImage(TILE_1_FILE);
             }
             if (box2 == null) {
-                box2 = ImageIO.read(new File(TILE_2_FILE));
+                box2 = loadImage(TILE_2_FILE);
             }
             if (box3 == null) {
-                box3 = ImageIO.read(new File(TILE_3_FILE));
+                box3 = loadImage(TILE_3_FILE);
             }
             if (box4 == null) {
-                box4 = ImageIO.read(new File(TILE_4_FILE));
+                box4 = loadImage(TILE_4_FILE);
             }
             if (box5 == null) {
-                box5 = ImageIO.read(new File(TILE_5_FILE));
+                box5 = loadImage(TILE_5_FILE);
             }
             if (box6 == null) {
-                box6 = ImageIO.read(new File(TILE_6_FILE));
+                box6 = loadImage(TILE_6_FILE);
             }
             if (box7 == null) {
-                box7 = ImageIO.read(new File(TILE_7_FILE));
+                box7 = loadImage(TILE_7_FILE);
             }
             if (box8 == null) {
-                box8 = ImageIO.read(new File(TILE_8_FILE));
+                box8 = loadImage(TILE_8_FILE);
             }
             if (redBomb == null) {
-                redBomb = ImageIO.read(new File(TILE_RED_BOMB_FILE));
+                redBomb = loadImage(TILE_RED_BOMB_FILE);
             }
             if (noBomb == null) {
-                noBomb = ImageIO.read(new File(TILE_NO_BOMB_FILE));
+                noBomb = loadImage(TILE_NO_BOMB_FILE);
             }
-        } catch (IOException e) {
-            System.out.println("Internal Error:" + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         // creates border around the court area, JComponent method
@@ -280,12 +278,22 @@ public class GameBoard extends JPanel {
     }
 
     public String[] getLoads() {
-        File folder = new File("saves");
-        File[] folderContents = folder.listFiles();
-        String[] fileNames = new String[folderContents.length];
-        if (folderContents == null) {
-            return fileNames;
+        // Get user's home directory for saves
+        String userHome = System.getProperty("user.home");
+        File folder = new File(userHome, "MinesweeperSaves");
+
+        // Create the saves directory if it doesn't exist
+        if (!folder.exists()) {
+            folder.mkdirs();
+            return new String[0];
         }
+
+        File[] folderContents = folder.listFiles();
+        if (folderContents == null) {
+            return new String[0];
+        }
+
+        String[] fileNames = new String[folderContents.length];
         for (int i = 0; i < folderContents.length; i++) {
             fileNames[i] = folderContents[i].getName().split("\\.")[0];
         }

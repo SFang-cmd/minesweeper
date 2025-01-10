@@ -3,6 +3,10 @@ package org.cis1200.minesweeper;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Class that tracks game stats such as number of tiles left and
+ * allows turns to occur
+ */
 public class TurnClock extends JPanel {
 
     public static final int INTERVAL = 35;
